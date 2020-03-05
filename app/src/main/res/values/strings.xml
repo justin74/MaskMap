@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">MaskMap</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_maps">MaskMap</string>
+    <string name="location_require">Location permission is required</string>
 </resources>

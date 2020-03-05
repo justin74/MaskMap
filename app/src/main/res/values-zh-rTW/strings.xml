@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">口罩地圖</string>
+    <string name="title_activity_maps">口罩地圖</string>
+    <string name="location_require">需要同意定位權限才可正常顯示</string>
+</resources>
