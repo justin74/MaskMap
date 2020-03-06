@@ -23,7 +23,7 @@ class AppModule {
     @Provides
     fun provideMaskService(moshi: Moshi): MaskService {
         return Retrofit.Builder()
-            .baseUrl("https://raw.githubusercontent.com/")
+            .baseUrl("https://raw.githubusercontent.com/kiang/pharmacies/master/json/")
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
             .create(MaskService::class.java)

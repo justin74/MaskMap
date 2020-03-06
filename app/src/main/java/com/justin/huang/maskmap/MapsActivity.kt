@@ -17,8 +17,11 @@ import com.justin.huang.maskmap.api.MaskService
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
+import okhttp3.ResponseBody
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
+import retrofit2.Call
+import retrofit2.Response
 import javax.inject.Inject
 
 
@@ -28,6 +31,7 @@ const val DEFAULT_ZOOM = 15f
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector {
     @Inject
     lateinit var androidInjector: DispatchingAndroidInjector<Any>
+
     @Inject
     lateinit var maskService: MaskService
 
@@ -52,6 +56,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+        //testGetData()
+    }
+
+    private fun testGetData() {
+        val call = maskService.getMaskData()
+        call.enqueue(object : retrofit2.Callback<ResponseBody> {
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                Log.e(TAG, "failed = $t")
+            }
+
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                Log.e(TAG, response.body()!!.string())
+            }
+        })
     }
 
     /**
