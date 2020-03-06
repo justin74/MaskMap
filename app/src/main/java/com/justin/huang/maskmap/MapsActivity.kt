@@ -13,16 +13,23 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.tasks.OnCompleteListener
+import com.justin.huang.maskmap.api.MaskService
+import dagger.android.AndroidInjector
+import dagger.android.DispatchingAndroidInjector
+import dagger.android.HasAndroidInjector
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
-
+import javax.inject.Inject
 
 
 const val REQUEST_CODE_LOCATION = 123
 const val DEFAULT_ZOOM = 15f
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector {
+    @Inject
+    lateinit var androidInjector: DispatchingAndroidInjector<Any>
+    @Inject
+    lateinit var maskService: MaskService
 
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
@@ -36,6 +43,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        //TODO: 轉向時處理 location, use viewModel?
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
@@ -97,7 +105,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun getDeviceLocation() {
         val locationResult = mFusedLocationProviderClient.lastLocation
-        locationResult.addOnCompleteListener(this, OnCompleteListener { task ->
+        locationResult.addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
                 mLastKnownLocation = task.result
                 if (mLastKnownLocation != null) {
@@ -113,12 +121,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     mMap.uiSettings.isMyLocationButtonEnabled = false
                 }
             }
-        })
+        }
     }
 
     private fun moveToLocation(latLng: LatLng) {
-       CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM).let {
-           mMap.moveCamera(it)
-       }
+        CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM).let {
+            mMap.moveCamera(it)
+        }
+    }
+
+    override fun androidInjector(): AndroidInjector<Any> {
+        return androidInjector
     }
 }
