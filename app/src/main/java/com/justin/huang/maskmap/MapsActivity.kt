@@ -13,27 +13,27 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.justin.huang.maskmap.api.MaskService
+import com.justin.huang.maskmap.api.MaskApiService
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
-import okhttp3.ResponseBody
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
-import retrofit2.Call
-import retrofit2.Response
 import javax.inject.Inject
 
-
-const val REQUEST_CODE_LOCATION = 123
-const val DEFAULT_ZOOM = 15f
-
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector {
+
+    companion object {
+        private const val REQUEST_CODE_LOCATION = 123
+        private const val DEFAULT_ZOOM = 15f
+        private const val TAG = "MapsActivity"
+    }
+
     @Inject
     lateinit var androidInjector: DispatchingAndroidInjector<Any>
 
     @Inject
-    lateinit var maskService: MaskService
+    lateinit var maskApiService: MaskApiService
 
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
@@ -41,10 +41,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
     private lateinit var mMap: GoogleMap
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
     private var mLastKnownLocation: Location? = null
-
-    companion object {
-        private const val TAG = "MapsActivity"
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: 轉向時處理 location, use viewModel?
@@ -56,20 +52,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-        //testGetData()
-    }
-
-    private fun testGetData() {
-        val call = maskService.getMaskData()
-        call.enqueue(object : retrofit2.Callback<ResponseBody> {
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                Log.e(TAG, "failed = $t")
-            }
-
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                Log.e(TAG, response.body()!!.string())
-            }
-        })
     }
 
     /**

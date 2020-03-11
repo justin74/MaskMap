@@ -1,9 +1,9 @@
 package com.justin.huang.maskmap.data
 
-import com.squareup.moshi.JsonClass
+import androidx.room.Entity
 
-@JsonClass(generateAdapter = true)
-data class Properties(
+@Entity(primaryKeys = ["id"])
+data class DrugStore(
     val id: String,
     val address: String,
     val available: String,
@@ -18,5 +18,7 @@ data class Properties(
     val service_periods: String,
     val town: String,
     val updated: String,
-    val website: String
+    val website: String,
+    val latitude: String,
+    val longitude: String
 )

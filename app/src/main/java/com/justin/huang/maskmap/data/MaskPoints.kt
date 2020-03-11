@@ -1,6 +1,9 @@
 package com.justin.huang.maskmap.data
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class MaskPoints(
-    val features: List<Feature>,
-    val type: String
+    val type: String,
+    val features: List<Feature>
 )

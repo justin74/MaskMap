@@ -1,6 +1,10 @@
 package com.justin.huang.maskmap.di
 
-import com.justin.huang.maskmap.api.MaskService
+import android.app.Application
+import androidx.room.Room
+import com.justin.huang.maskmap.api.MaskApiService
+import com.justin.huang.maskmap.db.MaskMapDb
+import com.justin.huang.maskmap.db.DrugStoreDao
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -21,11 +25,24 @@ class AppModule {
 
     @Singleton
     @Provides
-    fun provideMaskService(moshi: Moshi): MaskService {
+    fun provideMaskApiService(moshi: Moshi): MaskApiService {
         return Retrofit.Builder()
             .baseUrl("https://raw.githubusercontent.com/kiang/pharmacies/master/json/")
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
-            .create(MaskService::class.java)
+            .create(MaskApiService::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideDb(app: Application): MaskMapDb {
+        return Room.databaseBuilder(app, MaskMapDb::class.java, "maskMap.db")
+            .build()
+    }
+
+    @Singleton
+    @Provides
+    fun provideDrugStoreDao(db: MaskMapDb): DrugStoreDao {
+        return db.drugStoreDao()
     }
 }
