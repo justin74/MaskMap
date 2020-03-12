@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -13,12 +12,12 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.justin.huang.maskmap.api.MaskApiService
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
+import timber.log.Timber
 import javax.inject.Inject
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector {
@@ -26,14 +25,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
     companion object {
         private const val REQUEST_CODE_LOCATION = 123
         private const val DEFAULT_ZOOM = 15f
-        private const val TAG = "MapsActivity"
     }
 
     @Inject
     lateinit var androidInjector: DispatchingAndroidInjector<Any>
-
-    @Inject
-    lateinit var maskApiService: MaskApiService
 
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
@@ -44,6 +39,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: 轉向時處理 location, use viewModel?
+        Timber.e("onCreate")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
@@ -64,7 +60,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
      * installed Google Play services and returned to the app.
      */
     override fun onMapReady(googleMap: GoogleMap) {
-        // Return early if map is not initialised properly
         mMap = googleMap
         enableMyLocation()
     }
@@ -111,12 +106,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
                 if (mLastKnownLocation != null) {
                     val lat = mLastKnownLocation!!.latitude
                     val lng = mLastKnownLocation!!.longitude
-                    Log.e(TAG, "lat = $lat, lng = $lng")
+                    Timber.e("lat = $lat, lng = $lng")
                     val latLng = LatLng(lat, lng)
                     moveToLocation(latLng)
                 } else {
-                    Log.d(TAG, "Current location is null. Using defaults.")
-                    Log.e(TAG, "Exception: %s", task.exception)
+                    Timber.d("Current location is null. Using defaults.")
+                    Timber.e("Exception: $task.exception")
                     moveToLocation(mDefaultLocation)
                     mMap.uiSettings.isMyLocationButtonEnabled = false
                 }
