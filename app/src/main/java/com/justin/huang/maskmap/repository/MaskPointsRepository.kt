@@ -13,8 +13,10 @@ class MaskPointsRepository @Inject constructor(
     private val drugStoreDao: DrugStoreDao
 ) {
     suspend fun fetchMaskPoints() {
-        Timber.e("fetchMaskPoints")
+        Timber.d("fetch mask points")
         val maskPoints = maskApiService.getMaskPoints()
         drugStoreDao.insertDrugStores(maskPoints.asDatabaseModel())
     }
+
+    fun getDrugStoreList() = drugStoreDao.getDrugStoreList()
 }

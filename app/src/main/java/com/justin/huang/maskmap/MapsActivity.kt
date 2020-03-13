@@ -4,16 +4,20 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.*
+import com.justin.huang.maskmap.db.DrugStore
 import com.justin.huang.maskmap.viewModel.DrugStoreViewModel
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
@@ -23,7 +27,8 @@ import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 import javax.inject.Inject
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector {
+class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyCallback,
+    HasAndroidInjector {
 
     companion object {
         private const val REQUEST_CODE_LOCATION = 123
@@ -36,7 +41,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
 
-    val drugStoreViewModel: DrugStoreViewModel by viewModels {
+    private val drugStoreViewModel: DrugStoreViewModel by viewModels {
         viewModelFactory
     }
 
@@ -49,7 +54,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: 轉向時處理 location, use viewModel?
-        Timber.e("onCreate")
+        Timber.d("onCreate")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
@@ -58,6 +63,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+    }
+
+    override fun androidInjector(): AndroidInjector<Any> {
+        return androidInjector
     }
 
     /**
@@ -94,8 +103,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
     @AfterPermissionGranted(REQUEST_CODE_LOCATION)
     private fun enableMyLocation() {
         if (hasLocationPermission()) {
-            mMap.isMyLocationEnabled = true
             getDeviceLocation()
+            subscribeDrugStoresLocation()
         } else {
             EasyPermissions.requestPermissions(
                 this, getString(R.string.location_require),
@@ -116,8 +125,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
                 if (mLastKnownLocation != null) {
                     val lat = mLastKnownLocation!!.latitude
                     val lng = mLastKnownLocation!!.longitude
-                    Timber.e("lat = $lat, lng = $lng")
+                    Timber.d("current location: ($lat, $lng)")
                     val latLng = LatLng(lat, lng)
+                    //TODO: not start move here?
+                    with(mMap) {
+                        isMyLocationEnabled = true
+                        setOnInfoWindowClickListener(this@MapsActivity)
+                    }
                     moveToLocation(latLng)
                 } else {
                     Timber.d("Current location is null. Using defaults.")
@@ -135,7 +149,30 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, HasAndroidInjector
         }
     }
 
-    override fun androidInjector(): AndroidInjector<Any> {
-        return androidInjector
+    private fun subscribeDrugStoresLocation() {
+        drugStoreViewModel.drugStoreList.observe(this, Observer { drugStores ->
+            drugStores?.let {
+                //TODO: add worker to get data?
+                Timber.d("drugStores count = ${drugStores.size}")
+                addMarkerToMap(drugStores)
+            }
+        })
+    }
+
+    private fun addMarkerToMap(drugStores: List<DrugStore>) {
+        //TODO: 只取鄰近地點? bounds?
+        Timber.d("add drugstore marker ")
+        drugStores.forEach {
+            mMap.addMarker(
+                MarkerOptions().apply {
+                    position(LatLng(it.latitude, it.longitude))
+                    title(it.name)
+                }
+            )
+        }
+    }
+
+    override fun onInfoWindowClick(marker: Marker) {
+        Toast.makeText(this, "info click", Toast.LENGTH_SHORT).show()
     }
 }
