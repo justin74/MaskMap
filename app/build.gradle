@@ -33,6 +33,10 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    dataBinding {
+        enabled = true
+    }
 }
 
 dependencies {
@@ -76,6 +80,8 @@ dependencies {
     //kapt "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
     // Fragment
     implementation "androidx.fragment:fragment-ktx:$fragment_version"
+    // CardView
+    implementation "androidx.cardview:cardview:$cardview_version"
     // Test
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "androidx.test.ext:junit:$ext_junit_version"

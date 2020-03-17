@@ -2,11 +2,17 @@ package com.justin.huang.maskmap
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -48,9 +54,22 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
     private val mDefaultLocation = LatLng(-33.8523341, 151.2106085)
-    private lateinit var mMap: GoogleMap
+    private lateinit var mGoogleMap: GoogleMap
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
     private var mLastKnownLocation: Location? = null
+
+    internal inner class CustomInfoWindowAdapter : GoogleMap.InfoWindowAdapter {
+        //TODO: Data biinding?
+        private val infoContent: View = layoutInflater.inflate(R.layout.drugstore_info_content, null)
+
+        override fun getInfoContents(marker: Marker): View? {
+           return infoContent
+        }
+
+        override fun getInfoWindow(marker: Marker): View?{
+            return null
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: 轉向時處理 location, use viewModel?
@@ -79,7 +98,7 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
      * installed Google Play services and returned to the app.
      */
     override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
+        mGoogleMap = googleMap
         enableMyLocation()
     }
 
@@ -128,8 +147,9 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
                     Timber.d("current location: ($lat, $lng)")
                     val latLng = LatLng(lat, lng)
                     //TODO: not start move here?
-                    with(mMap) {
+                    with(mGoogleMap) {
                         isMyLocationEnabled = true
+                        setInfoWindowAdapter(CustomInfoWindowAdapter())
                         setOnInfoWindowClickListener(this@MapsActivity)
                     }
                     moveToLocation(latLng)
@@ -137,7 +157,7 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
                     Timber.d("Current location is null. Using defaults.")
                     Timber.e("Exception: $task.exception")
                     moveToLocation(mDefaultLocation)
-                    mMap.uiSettings.isMyLocationButtonEnabled = false
+                    mGoogleMap.uiSettings.isMyLocationButtonEnabled = false
                 }
             }
         }
@@ -145,12 +165,12 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
 
     private fun moveToLocation(latLng: LatLng) {
         CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM).let {
-            mMap.moveCamera(it)
+            mGoogleMap.moveCamera(it)
         }
     }
 
     private fun subscribeDrugStoresLocation() {
-        drugStoreViewModel.drugStoreList.observe(this, Observer { drugStores ->
+        drugStoreViewModel.drugStores.observe(this, Observer { drugStores ->
             drugStores?.let {
                 //TODO: add worker to get data?
                 Timber.d("drugStores count = ${drugStores.size}")
@@ -163,13 +183,44 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
         //TODO: 只取鄰近地點? bounds?
         Timber.d("add drugstore marker ")
         drugStores.forEach {
-            mMap.addMarker(
+            mGoogleMap.addMarker(
                 MarkerOptions().apply {
                     position(LatLng(it.latitude, it.longitude))
                     title(it.name)
+                    icon(BitmapDescriptorFactory.fromResource(getDrawableResId(it.maskAdult)))
                 }
             )
         }
+    }
+
+    private fun getDrawableResId(adultMaskAmount: Int): Int {
+        //TODO: 顏色問題?
+        return when (adultMaskAmount) {
+            0 -> R.drawable.mask_empty
+            in 1 until 20 -> R.drawable.mask_few
+            in 20 until 200 -> R.drawable.mask_less
+            else -> R.drawable.mask_many
+        }
+    }
+
+    /**
+     * Demonstrates converting a [Drawable] to a [BitmapDescriptor],
+     * for use as a marker icon.
+     */
+    private fun vectorToBitmap(@DrawableRes id: Int): BitmapDescriptor {
+        val vectorDrawable: Drawable? = ResourcesCompat.getDrawable(resources, id, null)
+        if (vectorDrawable == null) {
+            Timber.e("Resource not found")
+            return BitmapDescriptorFactory.defaultMarker()
+        }
+        val bitmap = Bitmap.createBitmap(
+            vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
+        vectorDrawable.draw(canvas)
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 
     override fun onInfoWindowClick(marker: Marker) {

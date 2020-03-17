@@ -2,4 +2,5 @@
     <string name="app_name">MaskMap</string>
     <string name="title_activity_maps">MaskMap</string>
     <string name="location_require">Location permission is required</string>
+    <string name="masks_remaining">口罩剩餘</string>
 </resources>

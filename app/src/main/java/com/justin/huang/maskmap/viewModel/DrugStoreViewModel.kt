@@ -1,8 +1,6 @@
 package com.justin.huang.maskmap.viewModel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.justin.huang.maskmap.db.DrugStore
 import com.justin.huang.maskmap.repository.MaskPointsRepository
 import kotlinx.coroutines.launch
@@ -11,7 +9,7 @@ import javax.inject.Inject
 
 class DrugStoreViewModel @Inject constructor(private val repository: MaskPointsRepository) :
     ViewModel() {
-    val drugStoreList: LiveData<List<DrugStore>> = repository.getDrugStoreList()
+    val drugStores: LiveData<List<DrugStore>> = repository.getDrugStoreList()
 
     init {
         viewModelScope.launch {
