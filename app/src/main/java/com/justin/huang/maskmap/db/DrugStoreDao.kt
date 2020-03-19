@@ -13,4 +13,7 @@ interface DrugStoreDao {
 
     @Query("SELECT * FROM Drugstore")
     fun getDrugStoreList(): LiveData<List<DrugStore>>
+
+    @Query("SELECT * FROM DrugStore WHERE id =:id")
+    fun getDrugStore(id: String): LiveData<DrugStore>
 }

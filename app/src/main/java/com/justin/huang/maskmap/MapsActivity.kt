@@ -23,11 +23,13 @@ import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.justin.huang.maskmap.databinding.DrugstoreInfoContentBinding
 import com.justin.huang.maskmap.db.DrugStore
 import com.justin.huang.maskmap.viewModel.DrugStoreViewModel
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
+import kotlinx.android.synthetic.main.activity_maps.*
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
@@ -59,14 +61,17 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
     private var mLastKnownLocation: Location? = null
 
     internal inner class CustomInfoWindowAdapter : GoogleMap.InfoWindowAdapter {
-        //TODO: Data biinding?
-        private val infoContent: View = layoutInflater.inflate(R.layout.drugstore_info_content, null)
+        private val binding = DrugstoreInfoContentBinding.inflate(layoutInflater, null, false)
 
         override fun getInfoContents(marker: Marker): View? {
-           return infoContent
+            binding.apply {
+                drugstore = marker.tag as DrugStore
+                executePendingBindings()
+            }
+            return binding.root
         }
 
-        override fun getInfoWindow(marker: Marker): View?{
+        override fun getInfoWindow(marker: Marker): View? {
             return null
         }
     }
@@ -79,9 +84,10 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+//        val mapFragment = supportFragmentManager
+//            .findFragmentById(R.id.map) as SupportMapFragment
+//        mapFragment.getMapAsync(this)
+        (map as SupportMapFragment).getMapAsync(this)
     }
 
     override fun androidInjector(): AndroidInjector<Any> {
@@ -174,6 +180,7 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
             drugStores?.let {
                 //TODO: add worker to get data?
                 Timber.d("drugStores count = ${drugStores.size}")
+                //TODO: null check?
                 addMarkerToMap(drugStores)
             }
         })
@@ -187,14 +194,16 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
                 MarkerOptions().apply {
                     position(LatLng(it.latitude, it.longitude))
                     title(it.name)
-                    icon(BitmapDescriptorFactory.fromResource(getDrawableResId(it.maskAdult)))
+                    icon(BitmapDescriptorFactory.fromResource(getMarkerIcon(it.maskAdult)))
+                    snippet(it.id)
+                    //TODO: zIndex?
                 }
-            )
+            ).tag = it
         }
     }
 
-    private fun getDrawableResId(adultMaskAmount: Int): Int {
-        //TODO: 顏色問題?
+    private fun getMarkerIcon(adultMaskAmount: Int): Int {
+        //TODO: 圖片多層問題?
         return when (adultMaskAmount) {
             0 -> R.drawable.mask_empty
             in 1 until 20 -> R.drawable.mask_few
@@ -224,6 +233,6 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
     }
 
     override fun onInfoWindowClick(marker: Marker) {
-        Toast.makeText(this, "info click", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, marker.title, Toast.LENGTH_SHORT).show()
     }
 }

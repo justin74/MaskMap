@@ -3,4 +3,7 @@
     <string name="title_activity_maps">MaskMap</string>
     <string name="location_require">Location permission is required</string>
     <string name="masks_remaining">口罩剩餘</string>
+    <string name="adult">成人</string>
+    <string name="child">兒童</string>
+    <string name="data_update">資料更新於:\u0020</string>
 </resources>
