@@ -1,6 +1,6 @@
 package com.justin.huang.maskmap.data
 
-import com.justin.huang.maskmap.db.DrugStore
+import com.justin.huang.maskmap.db.Drugstore
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
@@ -9,9 +9,9 @@ data class MaskPoints(
     val features: List<Feature>
 )
 
-fun MaskPoints.asDatabaseModel(): List<DrugStore> {
+fun MaskPoints.asDatabaseModel(): List<Drugstore> {
     return features.map {
-        DrugStore(
+        Drugstore(
             id = it.properties.id,
             address = it.properties.address,
             available = it.properties.available,

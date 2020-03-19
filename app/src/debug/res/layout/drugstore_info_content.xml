@@ -7,7 +7,7 @@
 
         <variable
             name="drugstore"
-            type="com.justin.huang.maskmap.db.DrugStore" />
+            type="com.justin.huang.maskmap.db.Drugstore" />
     </data>
 
     <LinearLayout

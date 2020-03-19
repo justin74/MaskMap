@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 
 @Entity(primaryKeys = ["id"])
-data class DrugStore (
+data class Drugstore (
     val id: String,
     val address: String,
     val available: String,

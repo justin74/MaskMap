@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.justin.huang.maskmap.api.MaskApiService
 import com.justin.huang.maskmap.db.MaskMapDb
-import com.justin.huang.maskmap.db.DrugStoreDao
+import com.justin.huang.maskmap.db.DrugstoreDao
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -42,7 +42,7 @@ class AppModule {
 
     @Singleton
     @Provides
-    fun provideDrugStoreDao(db: MaskMapDb): DrugStoreDao {
-        return db.drugStoreDao()
+    fun provideDrugstoreDao(db: MaskMapDb): DrugstoreDao {
+        return db.drugstoreDao()
     }
 }

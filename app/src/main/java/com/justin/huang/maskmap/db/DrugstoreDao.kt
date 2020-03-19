@@ -7,13 +7,13 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 
 @Dao
-interface DrugStoreDao {
+interface DrugstoreDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertDrugStores(drugStores: List<DrugStore>)
+    suspend fun insertDrugstores(drugstores: List<Drugstore>)
 
     @Query("SELECT * FROM Drugstore")
-    fun getDrugStoreList(): LiveData<List<DrugStore>>
+    fun getDrugstoreList(): LiveData<List<Drugstore>>
 
-    @Query("SELECT * FROM DrugStore WHERE id =:id")
-    fun getDrugStore(id: String): LiveData<DrugStore>
+    @Query("SELECT * FROM Drugstore WHERE id =:id")
+    fun getDrugstore(id: String): LiveData<Drugstore>
 }
