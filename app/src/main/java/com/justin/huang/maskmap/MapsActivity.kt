@@ -233,6 +233,7 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
     }
 
     override fun onInfoWindowClick(marker: Marker) {
+        //TODO: go to detail?
         Toast.makeText(this, marker.title, Toast.LENGTH_SHORT).show()
     }
 }

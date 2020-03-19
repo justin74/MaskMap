@@ -21,6 +21,7 @@ buildscript {
         lifecycle_version = '2.2.0'
         fragment_version = '1.2.2'
         cardview_version = '1.0.0'
+        nav_version = '2.3.0-alpha03'
     }
     repositories {
         google()
