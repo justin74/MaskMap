@@ -8,22 +8,23 @@ import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.justin.huang.maskmap.databinding.DrugstoreInfoContentBinding
+import com.justin.huang.maskmap.databinding.ActivityMapsBinding
 import com.justin.huang.maskmap.db.DrugStore
 import com.justin.huang.maskmap.viewModel.DrugStoreViewModel
 import dagger.android.AndroidInjector
@@ -35,8 +36,8 @@ import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 import javax.inject.Inject
 
-class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyCallback,
-    HasAndroidInjector {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMarkerClickListener,
+    OnMapClickListener, HasAndroidInjector {
 
     companion object {
         private const val REQUEST_CODE_LOCATION = 123
@@ -53,34 +54,24 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
         viewModelFactory
     }
 
-    // A default location (Sydney, Australia) and default zoom to use when location permission is
-    // not granted.
-    private val mDefaultLocation = LatLng(-33.8523341, 151.2106085)
     private lateinit var mGoogleMap: GoogleMap
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
     private var mLastKnownLocation: Location? = null
-
-    internal inner class CustomInfoWindowAdapter : GoogleMap.InfoWindowAdapter {
-        private val binding = DrugstoreInfoContentBinding.inflate(layoutInflater, null, false)
-
-        override fun getInfoContents(marker: Marker): View? {
-            binding.apply {
-                drugstore = marker.tag as DrugStore
-                executePendingBindings()
-            }
-            return binding.root
-        }
-
-        override fun getInfoWindow(marker: Marker): View? {
-            return null
-        }
-    }
+    private lateinit var binding: ActivityMapsBinding
+    private lateinit var drugstore: DrugStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: 轉向時處理 location, use viewModel?
         Timber.d("onCreate")
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_maps)
+        // setContentView(R.layout.activity_maps)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_maps)
+        binding.apply {
+            fab.setOnClickListener {
+                Timber.e("location FAB click")
+                enableMyLocation()
+            }
+        }
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -103,8 +94,16 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
-    override fun onMapReady(googleMap: GoogleMap) {
-        mGoogleMap = googleMap
+    override fun onMapReady(googleMap: GoogleMap?) {
+        Timber.e("onMapReady")
+        mGoogleMap = googleMap ?: return
+        with(mGoogleMap) {
+            uiSettings.isMyLocationButtonEnabled = false
+            uiSettings.isMapToolbarEnabled = false
+            setOnMarkerClickListener(this@MapsActivity)
+            setOnMapClickListener(this@MapsActivity)
+        }
+        subscribeDrugStoresLocation()
         enableMyLocation()
     }
 
@@ -128,9 +127,10 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
     @AfterPermissionGranted(REQUEST_CODE_LOCATION)
     private fun enableMyLocation() {
         if (hasLocationPermission()) {
+            mGoogleMap.isMyLocationEnabled = true // this setup need permission
             getDeviceLocation()
-            subscribeDrugStoresLocation()
         } else {
+            mGoogleMap.isMyLocationEnabled = false
             EasyPermissions.requestPermissions(
                 this, getString(R.string.location_require),
                 REQUEST_CODE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION
@@ -148,22 +148,13 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
             if (task.isSuccessful) {
                 mLastKnownLocation = task.result
                 if (mLastKnownLocation != null) {
-                    val lat = mLastKnownLocation!!.latitude
-                    val lng = mLastKnownLocation!!.longitude
-                    Timber.d("current location: ($lat, $lng)")
-                    val latLng = LatLng(lat, lng)
-                    //TODO: not start move here?
-                    with(mGoogleMap) {
-                        isMyLocationEnabled = true
-                        setInfoWindowAdapter(CustomInfoWindowAdapter())
-                        setOnInfoWindowClickListener(this@MapsActivity)
-                    }
-                    moveToLocation(latLng)
+                    val latLng =
+                        LatLng(mLastKnownLocation!!.latitude, mLastKnownLocation!!.longitude)
+                    Timber.d("current location: $latLng")
+                    animateToLocation(latLng)
                 } else {
                     Timber.d("Current location is null. Using defaults.")
                     Timber.e("Exception: $task.exception")
-                    moveToLocation(mDefaultLocation)
-                    mGoogleMap.uiSettings.isMyLocationButtonEnabled = false
                 }
             }
         }
@@ -172,6 +163,12 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
     private fun moveToLocation(latLng: LatLng) {
         CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM).let {
             mGoogleMap.moveCamera(it)
+        }
+    }
+
+    private fun animateToLocation(latLng: LatLng) {
+        CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM).let {
+            mGoogleMap.animateCamera(it)
         }
     }
 
@@ -189,13 +186,12 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
     private fun addMarkerToMap(drugStores: List<DrugStore>) {
         //TODO: 只取鄰近地點? bounds?
         Timber.d("add drugstore marker ")
+        mGoogleMap.clear()
         drugStores.forEach {
             mGoogleMap.addMarker(
                 MarkerOptions().apply {
                     position(LatLng(it.latitude, it.longitude))
-                    title(it.name)
                     icon(BitmapDescriptorFactory.fromResource(getMarkerIcon(it.maskAdult)))
-                    snippet(it.id)
                     //TODO: zIndex?
                 }
             ).tag = it
@@ -232,8 +228,17 @@ class MapsActivity : AppCompatActivity(), OnInfoWindowClickListener, OnMapReadyC
         return BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 
-    override fun onInfoWindowClick(marker: Marker) {
-        //TODO: go to detail?
-        Toast.makeText(this, marker.title, Toast.LENGTH_SHORT).show()
+    override fun onMarkerClick(marker: Marker): Boolean {
+        // like recycle view adapter, binding list item
+        val drugstore = marker.tag as DrugStore
+        Timber.e("onMarkerClick = ${drugstore.name}")
+        binding.drugstore = drugstore
+        binding.drugstoreInfo.visibility = View.VISIBLE
+        return false
+    }
+
+    override fun onMapClick(latlng: LatLng?) {
+        Timber.e("onMapClick")
+        binding.drugstoreInfo.visibility = View.GONE
     }
 }
