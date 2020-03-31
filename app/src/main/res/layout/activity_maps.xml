@@ -5,9 +5,15 @@
 
     <data>
 
+        <import type="android.view.View" />
+
         <variable
             name="drugstore"
             type="com.justin.huang.maskmap.db.DrugStore" />
+
+        <variable
+            name="chipPhoneCallback"
+            type="com.justin.huang.maskmap.MapsActivity.ChipCallback" />
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -27,7 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:layout_margin="@dimen/card_margin"
-            android:visibility="gone"
+            android:visibility="@{drugstore != null ? View.VISIBLE : View.GONE}"
             app:cardCornerRadius="@dimen/card_radius"
             app:cardElevation="@dimen/card_elevation"
             app:contentPadding="@dimen/card_padding"
@@ -109,6 +115,33 @@
                         android:text="@{drugstore.updated}"
                         tools:text="yyyy/mm/dd hh:mm:ss" />
                 </LinearLayout>
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chip_group"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:singleLine="true">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_navigation"
+                            style="@style/drugstore_info_chip_style"
+                            android:onClick="@{(view) -> chipPhoneCallback.onChipClick(view, drugstore)}"
+                            android:text="@string/direction"
+                            app:chipIcon="@drawable/ic_directions_24dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_phone"
+                            style="@style/drugstore_info_chip_style"
+                            android:onClick="@{(view) -> chipPhoneCallback.onChipClick(view, drugstore)}"
+                            android:text="@string/local_phone"
+                            app:chipIcon="@drawable/ic_local_phone_24dp" />
+                    </com.google.android.material.chip.ChipGroup>
+                </HorizontalScrollView>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

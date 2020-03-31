@@ -2,10 +2,12 @@ package com.justin.huang.maskmap
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
@@ -19,8 +21,8 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
@@ -70,6 +72,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMarkerClickListe
             fab.setOnClickListener {
                 Timber.e("location FAB click")
                 enableMyLocation()
+            }
+            chipPhoneCallback = object : ChipCallback {
+                override fun onChipClick(view: View, drugstore: DrugStore?) {
+                    drugstore?.let {
+                        when (view.id) {
+                            R.id.chip_navigation -> {
+                                val gmmIntentUri =
+                                    Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${drugstore.latitude},${drugstore.longitude}")
+                                val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                                mapIntent.setPackage("com.google.android.apps.maps")
+                                startActivity(mapIntent)
+                            }
+                            R.id.chip_phone -> {
+                                val intent =
+                                    Intent(Intent.ACTION_DIAL, Uri.parse("tel:${drugstore.phone}"))
+                                startActivity(intent)
+                            }
+                        }
+                    }
+                }
             }
         }
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
@@ -229,16 +251,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMarkerClickListe
     }
 
     override fun onMarkerClick(marker: Marker): Boolean {
-        // like recycle view adapter, binding list item
+        //TODO: like recycle view adapter, binding list item. use view model?
         val drugstore = marker.tag as DrugStore
         Timber.e("onMarkerClick = ${drugstore.name}")
         binding.drugstore = drugstore
-        binding.drugstoreInfo.visibility = View.VISIBLE
+        //binding.drugstoreInfo.visibility = View.VISIBLE
         return false
     }
 
     override fun onMapClick(latlng: LatLng?) {
         Timber.e("onMapClick")
-        binding.drugstoreInfo.visibility = View.GONE
+        //TODO: unbind here?
+        //binding.drugstoreInfo.visibility = View.GONE
+        binding.drugstore = null
+    }
+
+    interface ChipCallback {
+        //TODO: another way?
+        fun onChipClick(view: View, drugstore: DrugStore?)
     }
 }

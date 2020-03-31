@@ -30,4 +30,15 @@
         <item name="android:textSize">14sp</item>
     </style>
 
+    <style name="drugstore_info_chip_style" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipStartPadding">@dimen/chip_padding</item>
+        <item name="chipEndPadding">@dimen/chip_padding</item>
+        <item name="chipBackgroundColor">@android:color/white</item>
+        <item name="chipStrokeWidth">@dimen/chip_stroke_width</item>
+        <item name="chipStrokeColor">@android:color/darker_gray</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
 </resources>
