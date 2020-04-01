@@ -2,9 +2,11 @@ package com.justin.huang.maskmap.db
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.clustering.ClusterItem
 
 @Entity(primaryKeys = ["id"])
-data class DrugStore (
+data class DrugStore(
     val id: String,
     val address: String,
     val available: String,
@@ -28,7 +30,19 @@ data class DrugStore (
     val longitude: Double,
     // 緯度
     val latitude: Double
-)
+) : ClusterItem {
+    override fun getSnippet(): String {
+        return ""
+    }
+
+    override fun getTitle(): String {
+        return ""
+    }
+
+    override fun getPosition(): LatLng {
+        return LatLng(latitude, longitude)
+    }
+}
 
 //fun List<DrugStoreEntity>.asDomainModel(): List<DrugStore> {
 //    return map {

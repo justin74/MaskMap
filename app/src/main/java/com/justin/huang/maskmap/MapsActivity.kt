@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.view.View
 import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
@@ -26,6 +27,9 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.maps.android.clustering.ClusterManager
+import com.google.maps.android.clustering.algo.NonHierarchicalViewBasedAlgorithm
+import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.justin.huang.maskmap.databinding.ActivityMapsBinding
 import com.justin.huang.maskmap.db.DrugStore
 import com.justin.huang.maskmap.viewModel.DrugStoreViewModel
@@ -38,8 +42,8 @@ import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 import javax.inject.Inject
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMarkerClickListener,
-    OnMapClickListener, HasAndroidInjector {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
+    OnMapClickListener, ClusterManager.OnClusterItemClickListener<DrugStore>, HasAndroidInjector {
 
     companion object {
         private const val REQUEST_CODE_LOCATION = 123
@@ -61,12 +65,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMarkerClickListe
     private var mLastKnownLocation: Location? = null
     private lateinit var binding: ActivityMapsBinding
     private lateinit var drugstore: DrugStore
+    private lateinit var mClusterManager: ClusterManager<DrugStore>
+    private val metrics = DisplayMetrics()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: 轉向時處理 location, use viewModel?
         Timber.d("onCreate")
         super.onCreate(savedInstanceState)
         // setContentView(R.layout.activity_maps)
+        windowManager.defaultDisplay.getMetrics(metrics)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_maps)
         binding.apply {
             fab.setOnClickListener {
@@ -119,11 +126,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMarkerClickListe
     override fun onMapReady(googleMap: GoogleMap?) {
         Timber.e("onMapReady")
         mGoogleMap = googleMap ?: return
+        mClusterManager = ClusterManager(this@MapsActivity, mGoogleMap)
         with(mGoogleMap) {
             uiSettings.isMyLocationButtonEnabled = false
             uiSettings.isMapToolbarEnabled = false
-            setOnMarkerClickListener(this@MapsActivity)
+            //setOnMarkerClickListener(this@MapsActivity)
+            setOnMarkerClickListener(mClusterManager)
             setOnMapClickListener(this@MapsActivity)
+            setOnCameraIdleListener(mClusterManager)
+        }
+        with(mClusterManager) {
+            algorithm = NonHierarchicalViewBasedAlgorithm(metrics.widthPixels, metrics.heightPixels)
+            setOnClusterItemClickListener(this@MapsActivity)
         }
         subscribeDrugStoresLocation()
         enableMyLocation()
@@ -195,12 +209,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMarkerClickListe
     }
 
     private fun subscribeDrugStoresLocation() {
+        //mClusterManager.clearItems()
         drugStoreViewModel.drugStores.observe(this, Observer { drugStores ->
             drugStores?.let {
                 //TODO: add worker to get data?
                 Timber.d("drugStores count = ${drugStores.size}")
                 //TODO: null check?
-                addMarkerToMap(drugStores)
+                //addMarkerToMap(drugStores)
+                mClusterManager.addItems(it)
+                mClusterManager.cluster()
             }
         })
     }
@@ -250,20 +267,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMarkerClickListe
         return BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 
-    override fun onMarkerClick(marker: Marker): Boolean {
-        //TODO: like recycle view adapter, binding list item. use view model?
-        val drugstore = marker.tag as DrugStore
-        Timber.e("onMarkerClick = ${drugstore.name}")
-        binding.drugstore = drugstore
-        //binding.drugstoreInfo.visibility = View.VISIBLE
-        return false
-    }
+//    override fun onMarkerClick(marker: Marker): Boolean {
+//        //TODO: like recycle view adapter, binding list item. use view model?
+//        val drugstore = marker.tag as DrugStore
+//        Timber.e("onMarkerClick = ${drugstore.name}")
+//        binding.drugstore = drugstore
+//        //binding.drugstoreInfo.visibility = View.VISIBLE
+//        return false
+//    }
 
     override fun onMapClick(latlng: LatLng?) {
         Timber.e("onMapClick")
         //TODO: unbind here?
         //binding.drugstoreInfo.visibility = View.GONE
         binding.drugstore = null
+    }
+
+    override fun onClusterItemClick(item: DrugStore?): Boolean {
+        item?.let {
+            Timber.e("onClusterItemClick = ${it.name}")
+            //animateToLocation(LatLng(it.latitude, it.longitude))
+            binding.drugstore = it
+        }
+        return false
     }
 
     interface ChipCallback {

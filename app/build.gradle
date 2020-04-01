@@ -91,6 +91,8 @@ dependencies {
     implementation "com.android.support:multidex:$multidex_version"
     // material
     implementation "com.google.android.material:material:$material_version"
+    // map utils
+    implementation "com.google.maps.android:android-maps-utils:$maps_utils_version"
     // Test
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "androidx.test.ext:junit:$ext_junit_version"
