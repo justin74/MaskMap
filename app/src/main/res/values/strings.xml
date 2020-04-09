@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">口罩地圖</string>
     <string name="title_activity_maps">口罩地圖</string>
-    <string name="location_require">需要同意定位權限，才可正常使用</string>
+    <string name="location_require">請允許權限，才可正常使用定位功能</string>
     <string name="masks_remaining">口罩剩餘</string>
     <string name="adult_mask">成人口罩</string>
     <string name="child_mask">兒童口罩</string>

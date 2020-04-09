@@ -3,18 +3,13 @@ package com.justin.huang.maskmap
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.Drawable
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.View
 import androidx.activity.viewModels
-import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.res.ResourcesCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -23,10 +18,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener
-import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.NonHierarchicalViewBasedAlgorithm
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
@@ -47,7 +42,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
     companion object {
         private const val REQUEST_CODE_LOCATION = 123
-        private const val DEFAULT_ZOOM = 15f
+        private const val START_ZOOM = 6f
+        private const val CURRENT_LOCATION_ZOOM = 15f
     }
 
     @Inject
@@ -68,18 +64,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     private lateinit var mClusterManager: ClusterManager<DrugStore>
     private val metrics = DisplayMetrics()
 
+    // Default location
+    private var latlng = LatLng(23.973875, 120.982024)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: 轉向時處理 location, use viewModel?
         Timber.d("onCreate")
         super.onCreate(savedInstanceState)
-        // setContentView(R.layout.activity_maps)
+        //setContentView(R.layout.activity_maps)
         windowManager.defaultDisplay.getMetrics(metrics)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_maps)
         binding.apply {
-            fab.setOnClickListener {
+            fabLocation.setOnClickListener {
                 Timber.e("location FAB click")
                 enableMyLocation()
             }
+
+            fabRefresh.setOnClickListener {
+                Timber.e("refresh FAB click")
+                drugStoreViewModel.fetchMaskPoints()
+            }
+
             chipPhoneCallback = object : ChipCallback {
                 override fun onChipClick(view: View, drugstore: DrugStore?) {
                     drugstore?.let {
@@ -126,21 +131,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     override fun onMapReady(googleMap: GoogleMap?) {
         Timber.e("onMapReady")
         mGoogleMap = googleMap ?: return
-        mClusterManager = ClusterManager(this@MapsActivity, mGoogleMap)
         with(mGoogleMap) {
+            mClusterManager = ClusterManager(this@MapsActivity, this)
             uiSettings.isMyLocationButtonEnabled = false
             uiSettings.isMapToolbarEnabled = false
             //setOnMarkerClickListener(this@MapsActivity)
-            setOnMarkerClickListener(mClusterManager)
             setOnMapClickListener(this@MapsActivity)
+            setOnMarkerClickListener(mClusterManager)
             setOnCameraIdleListener(mClusterManager)
+            animateToLocation(latlng, START_ZOOM)
         }
         with(mClusterManager) {
+            renderer = DrugstoreRender()
             algorithm = NonHierarchicalViewBasedAlgorithm(metrics.widthPixels, metrics.heightPixels)
             setOnClusterItemClickListener(this@MapsActivity)
         }
-        subscribeDrugStoresLocation()
         enableMyLocation()
+        subscribeDrugStoresLocation()
     }
 
     override fun onRequestPermissionsResult(
@@ -184,10 +191,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             if (task.isSuccessful) {
                 mLastKnownLocation = task.result
                 if (mLastKnownLocation != null) {
-                    val latLng =
-                        LatLng(mLastKnownLocation!!.latitude, mLastKnownLocation!!.longitude)
-                    Timber.d("current location: $latLng")
-                    animateToLocation(latLng)
+//                    val latLng =
+//                        LatLng(mLastKnownLocation!!.latitude, mLastKnownLocation!!.longitude)
+                    latlng = LatLng(mLastKnownLocation!!.latitude, mLastKnownLocation!!.longitude)
+                    Timber.d("current location: $latlng")
+                    animateToLocation(latlng, CURRENT_LOCATION_ZOOM)
                 } else {
                     Timber.d("Current location is null. Using defaults.")
                     Timber.e("Exception: $task.exception")
@@ -197,23 +205,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun moveToLocation(latLng: LatLng) {
-        CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM).let {
+        CameraUpdateFactory.newLatLngZoom(latLng, CURRENT_LOCATION_ZOOM).let {
             mGoogleMap.moveCamera(it)
         }
     }
 
-    private fun animateToLocation(latLng: LatLng) {
-        CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM).let {
+    private fun animateToLocation(latLng: LatLng, zoom: Float) {
+        CameraUpdateFactory.newLatLngZoom(latLng, zoom).let {
             mGoogleMap.animateCamera(it)
         }
     }
 
     private fun subscribeDrugStoresLocation() {
-        //mClusterManager.clearItems()
+        mClusterManager.clearItems()
         drugStoreViewModel.drugStores.observe(this, Observer { drugStores ->
             drugStores?.let {
                 //TODO: add worker to get data?
-                Timber.d("drugStores count = ${drugStores.size}")
+                Timber.e("observe drugStores count = ${drugStores.size}")
                 //TODO: null check?
                 //addMarkerToMap(drugStores)
                 mClusterManager.addItems(it)
@@ -222,20 +230,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         })
     }
 
-    private fun addMarkerToMap(drugStores: List<DrugStore>) {
-        //TODO: 只取鄰近地點? bounds?
-        Timber.d("add drugstore marker ")
-        mGoogleMap.clear()
-        drugStores.forEach {
-            mGoogleMap.addMarker(
-                MarkerOptions().apply {
-                    position(LatLng(it.latitude, it.longitude))
-                    icon(BitmapDescriptorFactory.fromResource(getMarkerIcon(it.maskAdult)))
-                    //TODO: zIndex?
-                }
-            ).tag = it
-        }
-    }
+//    private fun addMarkerToMap(drugStores: List<DrugStore>) {
+//        //TODO: 只取鄰近地點? bounds?
+//        Timber.d("add drugstore marker ")
+//        mGoogleMap.clear()
+//        drugStores.forEach {
+//            mGoogleMap.addMarker(
+//                MarkerOptions().apply {
+//                    position(LatLng(it.latitude, it.longitude))
+//                    icon(BitmapDescriptorFactory.fromResource(getMarkerIcon(it.maskAdult)))
+//                    //TODO: zIndex?
+//                }
+//            ).tag = it
+//        }
+//    }
 
     private fun getMarkerIcon(adultMaskAmount: Int): Int {
         //TODO: 圖片多層問題?
@@ -247,32 +255,32 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
-    /**
-     * Demonstrates converting a [Drawable] to a [BitmapDescriptor],
-     * for use as a marker icon.
-     */
-    private fun vectorToBitmap(@DrawableRes id: Int): BitmapDescriptor {
-        val vectorDrawable: Drawable? = ResourcesCompat.getDrawable(resources, id, null)
-        if (vectorDrawable == null) {
-            Timber.e("Resource not found")
-            return BitmapDescriptorFactory.defaultMarker()
-        }
-        val bitmap = Bitmap.createBitmap(
-            vectorDrawable.intrinsicWidth,
-            vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888
-        )
-        val canvas = Canvas(bitmap)
-        vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
-        vectorDrawable.draw(canvas)
-        return BitmapDescriptorFactory.fromBitmap(bitmap)
-    }
+//    /**
+//     * Demonstrates converting a [Drawable] to a [BitmapDescriptor],
+//     * for use as a marker icon.
+//     */
+//    private fun vectorToBitmap(@DrawableRes id: Int): BitmapDescriptor {
+//        val vectorDrawable: Drawable? = ResourcesCompat.getDrawable(resources, id, null)
+//        if (vectorDrawable == null) {
+//            Timber.e("Resource not found")
+//            return BitmapDescriptorFactory.defaultMarker()
+//        }
+//        val bitmap = Bitmap.createBitmap(
+//            vectorDrawable.intrinsicWidth,
+//            vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888
+//        )
+//        val canvas = Canvas(bitmap)
+//        vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
+//        vectorDrawable.draw(canvas)
+//        return BitmapDescriptorFactory.fromBitmap(bitmap)
+//    }
 
 //    override fun onMarkerClick(marker: Marker): Boolean {
 //        //TODO: like recycle view adapter, binding list item. use view model?
 //        val drugstore = marker.tag as DrugStore
 //        Timber.e("onMarkerClick = ${drugstore.name}")
 //        binding.drugstore = drugstore
-//        //binding.drugstoreInfo.visibility = View.VISIBLE
+//        binding.drugstoreInfo.visibility = View.VISIBLE
 //        return false
 //    }
 
@@ -295,5 +303,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     interface ChipCallback {
         //TODO: another way?
         fun onChipClick(view: View, drugstore: DrugStore?)
+    }
+
+    inner class DrugstoreRender :
+        DefaultClusterRenderer<DrugStore>(applicationContext, mGoogleMap, mClusterManager) {
+        override fun onBeforeClusterItemRendered(item: DrugStore, markerOptions: MarkerOptions) {
+            val icon = getMarkerIcon(item.maskAdult)
+            markerOptions.icon(BitmapDescriptorFactory.fromResource(icon))
+            super.onBeforeClusterItemRendered(item, markerOptions)
+        }
+
+        override fun shouldRenderAsCluster(cluster: Cluster<DrugStore>): Boolean {
+            return cluster.size > 10
+        }
     }
 }

@@ -12,8 +12,12 @@ class DrugStoreViewModel @Inject constructor(private val repository: MaskPointsR
     val drugStores: LiveData<List<DrugStore>> = repository.getDrugStoreList()
 
     init {
+        fetchMaskPoints()
+    }
+
+    fun fetchMaskPoints() {
         viewModelScope.launch {
-            Timber.d("viewModel init")
+            Timber.e("fetch mask points")
             repository.fetchMaskPoints()
         }
     }
