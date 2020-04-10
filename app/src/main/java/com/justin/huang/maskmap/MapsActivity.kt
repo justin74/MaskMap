@@ -60,7 +60,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
     private var mLastKnownLocation: Location? = null
     private lateinit var binding: ActivityMapsBinding
-    private lateinit var drugstore: DrugStore
     private lateinit var mClusterManager: ClusterManager<DrugStore>
     private val metrics = DisplayMetrics()
 
@@ -217,13 +216,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun subscribeDrugStoresLocation() {
-        mClusterManager.clearItems()
         drugStoreViewModel.drugStores.observe(this, Observer { drugStores ->
             drugStores?.let {
                 //TODO: add worker to get data?
                 Timber.e("observe drugStores count = ${drugStores.size}")
                 //TODO: null check?
                 //addMarkerToMap(drugStores)
+                mClusterManager.clearItems()
                 mClusterManager.addItems(it)
                 mClusterManager.cluster()
             }

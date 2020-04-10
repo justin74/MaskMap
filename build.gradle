@@ -26,6 +26,7 @@ buildscript {
         multidex_version = '1.0.3'
         material_version = '1.2.0-alpha05'
         maps_utils_version = '1.0.2'
+        work_version = '2.3.4'
     }
     repositories {
         google()
