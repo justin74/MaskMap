@@ -13,6 +13,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -28,6 +31,7 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.justin.huang.maskmap.databinding.ActivityMapsBinding
 import com.justin.huang.maskmap.db.DrugStore
 import com.justin.huang.maskmap.viewModel.DrugStoreViewModel
+import com.justin.huang.maskmap.worker.MaskMapWorker
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
@@ -35,6 +39,7 @@ import kotlinx.android.synthetic.main.activity_maps.*
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
@@ -81,7 +86,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
             fabRefresh.setOnClickListener {
                 Timber.e("refresh FAB click")
-                drugStoreViewModel.fetchMaskPoints()
+                //drugStoreViewModel.fetchMaskPoints()
+                fetchMaskPointsOneTime()
             }
 
             chipPhoneCallback = object : ChipCallback {
@@ -106,6 +112,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             }
         }
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        fetchMaskPointsPeriodic()
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
 //        val mapFragment = supportFragmentManager
@@ -203,16 +210,34 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
-    private fun moveToLocation(latLng: LatLng) {
-        CameraUpdateFactory.newLatLngZoom(latLng, CURRENT_LOCATION_ZOOM).let {
+    private fun moveToLocation(latLng: LatLng, zoom: Float) {
+        CameraUpdateFactory.newLatLngZoom(latLng, zoom).let {
             mGoogleMap.moveCamera(it)
         }
     }
 
     private fun animateToLocation(latLng: LatLng, zoom: Float) {
         CameraUpdateFactory.newLatLngZoom(latLng, zoom).let {
-            mGoogleMap.animateCamera(it)
+            mGoogleMap.animateCamera(it, object : GoogleMap.CancelableCallback{
+                override fun onFinish() {
+                    Timber.e("animate Camera finish")
+                }
+
+                override fun onCancel() {
+                    Timber.e("animate Camera cancel")
+                }
+            })
         }
+    }
+
+    private fun fetchMaskPointsOneTime() {
+        val request = OneTimeWorkRequestBuilder<MaskMapWorker>().build()
+        WorkManager.getInstance(applicationContext).enqueue(request)
+    }
+
+    private fun fetchMaskPointsPeriodic() {
+        val request = PeriodicWorkRequestBuilder<MaskMapWorker>(15, TimeUnit.MINUTES).build()
+        WorkManager.getInstance(applicationContext).enqueue(request)
     }
 
     private fun subscribeDrugStoresLocation() {
@@ -275,7 +300,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 //    }
 
 //    override fun onMarkerClick(marker: Marker): Boolean {
-//        //TODO: like recycle view adapter, binding list item. use view model?
+//        // Like recycle view adapter, binding list item. use view model?
 //        val drugstore = marker.tag as DrugStore
 //        Timber.e("onMarkerClick = ${drugstore.name}")
 //        binding.drugstore = drugstore

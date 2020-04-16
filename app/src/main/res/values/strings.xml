@@ -5,7 +5,8 @@
     <string name="masks_remaining">口罩剩餘</string>
     <string name="adult_mask">成人口罩</string>
     <string name="child_mask">兒童口罩</string>
-    <string name="data_update">資料更新於:\u0020</string>
+    <string name="data_update">資料更新於: %1$s</string>
+    <string name="note">備註: %1$s</string>
     <string name="start_navigation">開始</string>
     <string name="local_phone">致電</string>
     <string name="direction">路線</string>
