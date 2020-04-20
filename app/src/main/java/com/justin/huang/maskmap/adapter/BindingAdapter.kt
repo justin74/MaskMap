@@ -1,8 +1,10 @@
 package com.justin.huang.maskmap.adapter
 
 import android.view.View
+import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.justin.huang.maskmap.R
 
 @BindingAdapter("maskAmountBackground")
@@ -16,4 +18,10 @@ fun bindMaskAmountBackground(view: View, amount: Int) {
         }
     )
     view.setBackgroundColor(color)
+}
+
+@BindingAdapter("bottomSheetState")
+fun bindBottomSheetState(cardView: CardView, state: Int) {
+    val bottomSheetBehavior = BottomSheetBehavior.from(cardView)
+    bottomSheetBehavior.state = state
 }

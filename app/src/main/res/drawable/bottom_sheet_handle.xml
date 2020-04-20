@@ -5,5 +5,8 @@
         android:bottomRightRadius="10dp"
         android:topLeftRadius="10dp"
         android:topRightRadius="10dp" />
+    <size
+        android:width="@dimen/bottom_sheet_handle_width"
+        android:height="@dimen/bottom_sheet_handle_height" />
     <solid android:color="#C0C0C0" />
 </shape>

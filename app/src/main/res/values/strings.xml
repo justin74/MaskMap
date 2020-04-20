@@ -6,8 +6,9 @@
     <string name="adult_mask">成人口罩</string>
     <string name="child_mask">兒童口罩</string>
     <string name="data_update">資料更新於: %1$s</string>
-    <string name="note">備註: %1$s</string>
     <string name="start_navigation">開始</string>
     <string name="local_phone">致電</string>
     <string name="direction">路線</string>
+    <string name="ic_note_desc">備註</string>
+    <string name="ic_place_desc">地址</string>
 </resources>

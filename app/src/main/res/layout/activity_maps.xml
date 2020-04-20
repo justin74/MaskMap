@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:bind="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
         <import type="android.view.View" />
+
+        <import type="com.google.android.material.bottomsheet.BottomSheetBehavior" />
 
         <variable
             name="drugstore"
@@ -30,99 +33,106 @@
         <androidx.cardview.widget.CardView
             android:id="@+id/drugstore_info"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_margin="@dimen/card_margin"
+            android:layout_height="match_parent"
             android:clickable="true"
             android:focusable="true"
-            android:visibility="@{drugstore != null ? View.VISIBLE : View.GONE}"
+            app:behavior_hideable="true"
+            app:behavior_peekHeight="@dimen/bottom_sheet_peek_height"
+            app:bottomSheetState="@{drugstore != null ? BottomSheetBehavior.STATE_COLLAPSED : BottomSheetBehavior.STATE_HIDDEN}"
+            app:cardBackgroundColor="@android:color/white"
             app:cardCornerRadius="@dimen/card_radius"
             app:cardElevation="@dimen/card_elevation"
-            app:contentPadding="@dimen/card_padding"
-            app:layout_insetEdge="bottom">
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_height="wrap_content">
+
+                <View
+                    android:id="@+id/bottom_sheet_handle"
+                    android:layout_width="@dimen/bottom_sheet_handle_width"
+                    android:layout_height="@dimen/bottom_sheet_handle_height"
+                    android:background="@drawable/bottom_sheet_handle"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/guideline_top" />
 
                 <TextView
                     android:id="@+id/drugstore_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/card_item_margin"
                     android:text="@{drugstore.name}"
                     android:textColor="@android:color/black"
                     android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="@id/guideline_left"
+                    app:layout_constraintTop_toBottomOf="@+id/bottom_sheet_handle"
                     tools:text="藥局名稱" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="@dimen/mask_amount_root_margin_top"
-                    android:orientation="horizontal">
+                    android:id="@+id/adult_mask_container"
+                    style="@style/drugstore_info_mask_amount_container"
+                    android:layout_marginTop="@dimen/card_item_margin"
+                    app:layout_constraintEnd_toStartOf="@+id/child_mask_container"
+                    app:layout_constraintHorizontal_chainStyle="spread_inside"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toStartOf="@id/guideline_left"
+                    app:layout_constraintTop_toBottomOf="@id/drugstore_name"
+                    app:maskAmountBackground="@{drugstore.maskAdult}"
+                    tools:background="@color/color_mask_many">
 
-                    <LinearLayout
-                        android:id="@+id/adult_mask_container"
-                        style="@style/drugstore_info_mask_amount_container"
-                        android:layout_marginEnd="@dimen/mask_amount_margin"
-                        app:maskAmountBackground="@{drugstore.maskAdult}"
-                        tools:background="@color/color_mask_many">
+                    <TextView
+                        style="@style/drugstore_info_mask_amount_text_view"
+                        android:text="@string/adult_mask" />
 
-                        <TextView
-                            style="@style/drugstore_info_mask_amount_text_view"
-                            android:text="@string/adult_mask" />
+                    <TextView
+                        android:id="@+id/adult_mask_amount"
+                        style="@style/drugstore_info_mask_amount_text_view"
+                        android:text="@{Integer.toString(drugstore.maskAdult)}"
+                        tools:text="1000" />
+                </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/adult_mask_amount"
-                            style="@style/drugstore_info_mask_amount_text_view"
-                            android:text="@{Integer.toString(drugstore.maskAdult)}"
-                            tools:text="1000" />
+                <LinearLayout
+                    android:id="@+id/child_mask_container"
+                    style="@style/drugstore_info_mask_amount_container"
+                    android:layout_marginStart="@dimen/card_item_margin"
+                    app:layout_constraintEnd_toEndOf="@id/guideline_right"
+                    app:layout_constraintHorizontal_chainStyle="spread_inside"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toEndOf="@+id/adult_mask_container"
+                    app:layout_constraintTop_toTopOf="@id/adult_mask_container"
+                    app:maskAmountBackground="@{drugstore.maskChild}"
+                    tools:background="@color/color_mask_few">
 
-                    </LinearLayout>
+                    <TextView
+                        style="@style/drugstore_info_mask_amount_text_view"
+                        android:text="@string/child_mask" />
 
-                    <LinearLayout
-                        android:id="@+id/child_mask_container"
-                        style="@style/drugstore_info_mask_amount_container"
-                        android:layout_marginStart="@dimen/mask_amount_margin"
-                        app:maskAmountBackground="@{drugstore.maskChild}"
-                        tools:background="@color/color_mask_few">
+                    <TextView
+                        android:id="@+id/child_mask_amount"
+                        style="@style/drugstore_info_mask_amount_text_view"
+                        android:text="@{Integer.toString(drugstore.maskChild)}"
+                        tools:text="2" />
 
-                        <TextView
-                            style="@style/drugstore_info_mask_amount_text_view"
-                            android:text="@string/child_mask" />
-
-                        <TextView
-                            android:id="@+id/child_mask_amount"
-                            style="@style/drugstore_info_mask_amount_text_view"
-                            android:text="@{Integer.toString(drugstore.maskChild)}"
-                            tools:text="2" />
-
-                    </LinearLayout>
                 </LinearLayout>
 
                 <TextView
-                    style="@style/drugstore_info_update_text_view"
-                    android:layout_marginTop="@dimen/mask_amount_root_margin_top"
-                    android:text="@{String.format(@string/note, drugstore.note)}"
-                    tools:text="備註: 文字" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/mask_amount_root_margin_top"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/drugstore_info_update_text_view"
-                        android:text="@{String.format(@string/data_update, drugstore.updated)}"
-                        tools:text="資料更新於: yyyy/mm/dd hh:mm:ss" />
-                </LinearLayout>
+                    android:id="@+id/drugstore_update_text_view"
+                    style="@style/drugstore_info_text_view"
+                    android:layout_marginTop="@dimen/card_item_margin"
+                    android:text="@{String.format(@string/data_update, drugstore.updated)}"
+                    app:layout_constraintStart_toStartOf="@id/guideline_left"
+                    app:layout_constraintTop_toBottomOf="@id/adult_mask_container"
+                    tools:text="資料更新於: yyyy/mm/dd hh:mm:ss" />
 
                 <HorizontalScrollView
-                    android:layout_width="match_parent"
+                    android:id="@+id/chip_group_scroll_view"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:scrollbars="none">
+                    android:layout_marginTop="@dimen/card_item_margin"
+                    android:scrollbars="none"
+                    app:layout_constraintStart_toStartOf="@id/guideline_left"
+                    app:layout_constraintTop_toBottomOf="@id/drugstore_update_text_view">
 
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/chip_group"
@@ -143,9 +153,50 @@
                             android:onClick="@{(view) -> chipPhoneCallback.onChipClick(view, drugstore)}"
                             android:text="@string/local_phone"
                             app:chipIcon="@drawable/ic_local_phone_24dp" />
+
                     </com.google.android.material.chip.ChipGroup>
                 </HorizontalScrollView>
-            </LinearLayout>
+
+                <View
+                    android:id="@+id/divider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="@dimen/card_item_margin"
+                    android:background="@android:color/black"
+                    app:layout_constraintTop_toBottomOf="@+id/chip_group_scroll_view" />
+
+                <include
+                    layout="@layout/drugstore_info_detail"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/card_item_margin"
+                    app:layout_constraintEnd_toEndOf="@id/guideline_right"
+                    app:layout_constraintStart_toStartOf="@id/guideline_left"
+                    app:layout_constraintTop_toBottomOf="@id/divider"
+                    bind:drugstore="@{drugstore}" />
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline_top"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintGuide_begin="8dp" />
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline_left"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_begin="8dp" />
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline_right"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_end="8dp" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -168,13 +219,12 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top"
             android:layout_margin="@dimen/fad_margin"
-            android:visibility="@{drugstore != null ? View.GONE : View.VISIBLE}"
             app:backgroundTint="@android:color/white"
             app:elevation="@dimen/floating_button_elevation"
             app:layout_anchor="@id/fab_location"
             app:layout_anchorGravity="end"
             app:rippleColor="@android:color/black"
-            app:srcCompat="@drawable/ic_refresh_black_24dp" />
+            app:srcCompat="@drawable/ic_sync_black_24dp" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="fad_margin">12dp</dimen>
-    <dimen name="card_padding">12dp</dimen>
-    <dimen name="card_margin">4dp</dimen>
-    <dimen name="fab_margin">16dp</dimen>
-    <dimen name="card_radius">8dp</dimen>
+    <dimen name="card_radius">10dp</dimen>
     <dimen name="card_elevation">10dp</dimen>
     <dimen name="floating_button_elevation">1dp</dimen>
-    <dimen name="mask_amount_root_margin_top">8dp</dimen>
-    <dimen name="mask_amount_margin">2dp</dimen>
     <dimen name="chip_padding">12dp</dimen>
     <dimen name="chip_stroke_width">1dp</dimen>
+    <dimen name="bottom_sheet_handle_width">20dp</dimen>
+    <dimen name="bottom_sheet_handle_height">3dp</dimen>
+    <dimen name="bottom_sheet_peek_height">200dp</dimen>
+    <dimen name="card_item_margin">8dp</dimen>
 </resources>
