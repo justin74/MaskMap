@@ -23,9 +23,9 @@
 
         <provider
             android:name="androidx.work.impl.WorkManagerInitializer"
-            tools:node="remove"
             android:authorities="${applicationId}.workmanager-init"
-            android:exported="false" />
+            android:exported="false"
+            tools:node="remove" />
 
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
@@ -41,6 +41,8 @@
 
         <activity
             android:name=".MapsActivity"
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/AppTheme.Launcher"
             android:label="@string/title_activity_maps">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

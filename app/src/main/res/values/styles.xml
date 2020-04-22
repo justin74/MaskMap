@@ -40,4 +40,9 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
+    <style name="AppTheme.Launcher">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowBackground">@drawable/bg_launcher</item>
+    </style>
+
 </resources>

@@ -145,7 +145,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             setOnMapClickListener(this@MapsActivity)
             setOnMarkerClickListener(mClusterManager)
             setOnCameraIdleListener(mClusterManager)
-            animateToLocation(latlng, START_ZOOM)
+            moveToLocation(latlng, START_ZOOM)
         }
         with(mClusterManager) {
             renderer = DrugstoreRender()
@@ -218,7 +218,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
     private fun animateToLocation(latLng: LatLng, zoom: Float) {
         CameraUpdateFactory.newLatLngZoom(latLng, zoom).let {
-            mGoogleMap.animateCamera(it, object : GoogleMap.CancelableCallback{
+            mGoogleMap.animateCamera(it, object : GoogleMap.CancelableCallback {
                 override fun onFinish() {
                     Timber.e("animate Camera finish")
                 }
@@ -316,6 +316,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     override fun onClusterItemClick(item: DrugStore?): Boolean {
+        //TODO: observer data?, change icon?
         item?.let {
             Timber.e("onClusterItemClick = ${it.name}")
             //animateToLocation(LatLng(it.latitude, it.longitude))

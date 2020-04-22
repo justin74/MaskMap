@@ -11,4 +11,5 @@
     <string name="direction">路線</string>
     <string name="ic_note_desc">備註</string>
     <string name="ic_place_desc">地址</string>
+    <string name="ic_schedule_desc">營業時間</string>
 </resources>
