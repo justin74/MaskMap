@@ -10,4 +10,6 @@
     <dimen name="bottom_sheet_handle_height">3dp</dimen>
     <dimen name="bottom_sheet_peek_height">200dp</dimen>
     <dimen name="card_item_margin">8dp</dimen>
+    <dimen name="hint_padding">8dp</dimen>
+    <dimen name="hint_layout_margin_top">40dp</dimen>
 </resources>

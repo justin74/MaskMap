@@ -7,4 +7,5 @@
     <color name="color_mask_less">#FBB03B</color>
     <color name="color_mask_few">#D4145A</color>
     <color name="color_mask_empty">#959595</color>
+    <color name="color_hint_background">#66000000</color>
 </resources>

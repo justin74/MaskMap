@@ -30,6 +30,16 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+        <TextView
+            android:id="@+id/hint_text_view"
+            android:layout_marginTop="@dimen/hint_layout_margin_top"
+            android:text="@string/hint"
+            android:background="@drawable/hint_background"
+            android:textColor="@android:color/white"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
         <androidx.cardview.widget.CardView
             android:id="@+id/drugstore_info"
             android:layout_width="match_parent"

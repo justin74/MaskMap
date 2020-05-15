@@ -6,8 +6,11 @@ import android.content.Intent
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.view.View
+import android.view.animation.BounceInterpolator
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -67,6 +70,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     private lateinit var binding: ActivityMapsBinding
     private lateinit var mClusterManager: ClusterManager<DrugStore>
     private val metrics = DisplayMetrics()
+    private lateinit var mRender: DrugstoreRender
 
     // Default location
     private var latlng = LatLng(23.973875, 120.982024)
@@ -145,10 +149,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             setOnMapClickListener(this@MapsActivity)
             setOnMarkerClickListener(mClusterManager)
             setOnCameraIdleListener(mClusterManager)
-            moveToLocation(latlng, START_ZOOM)
+            //moveToLocation(latlng, START_ZOOM)
         }
+        mRender = DrugstoreRender()
         with(mClusterManager) {
-            renderer = DrugstoreRender()
+            renderer = mRender
             algorithm = NonHierarchicalViewBasedAlgorithm(metrics.widthPixels, metrics.heightPixels)
             setOnClusterItemClickListener(this@MapsActivity)
         }
@@ -320,9 +325,32 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         item?.let {
             Timber.e("onClusterItemClick = ${it.name}")
             //animateToLocation(LatLng(it.latitude, it.longitude))
+            bounceAnimation(mRender.getMarker(it))
             binding.drugstore = it
         }
         return false
+    }
+
+    private fun bounceAnimation(marker: Marker) {
+        val handler = Handler()
+        val start = SystemClock.uptimeMillis()
+        val duration = 1500
+
+        val interpolator = BounceInterpolator()
+
+        handler.post(object : Runnable {
+            override fun run() {
+                val elapsed = SystemClock.uptimeMillis() - start
+                val t = Math.max(
+                    1 - interpolator.getInterpolation(elapsed.toFloat() / duration), 0f)
+                marker.setAnchor(0.5f, 1.0f + 2 * t)
+
+                // Post again 16ms later.
+                if (t > 0.0) {
+                    handler.postDelayed(this, 16)
+                }
+            }
+        })
     }
 
     interface ChipCallback {
